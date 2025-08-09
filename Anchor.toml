@@ -5,7 +5,7 @@ members = ["programs/solana-reputation-dao"]
 anchor_version = "0.29.0"
 
 [programs.localnet]
-solana_reputation_dao = "So1anaRepU6tWxzAoNn31M3b9nS6g2oT5VtN7k4XQ4vH"
+solana_reputation_dao = "CiQgzVgLRjLC13vFjBnfsf6QGWnHgqGMZhrCnxZt95ha"
 
 [registry]
 url = "https://anchor.projectserum.com"
