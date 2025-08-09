@@ -1,0 +1,409 @@
+{
+  "version": "0.1.0",
+  "name": "solana_reputation_dao",
+  "instructions": [
+    {
+      "name": "initializeProfile",
+      "accounts": [
+        {
+          "name": "profile",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 101, 112, 117, 116, 97, 116, 105, 111, 110]
+              },
+              { "kind": "account", "type": "publicKey", "path": "user" }
+            ]
+          }
+        },
+        { "name": "user", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "recordInteraction",
+      "accounts": [
+        {
+          "name": "fromProfile",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 101, 112, 117, 116, 97, 116, 105, 111, 110]
+              },
+              { "kind": "account", "type": "publicKey", "path": "fromUser" }
+            ]
+          }
+        },
+        {
+          "name": "toProfile",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 101, 112, 117, 116, 97, 116, 105, 111, 110]
+              },
+              { "kind": "account", "type": "publicKey", "path": "toUser" }
+            ]
+          }
+        },
+        { "name": "interactionEvent", "isMut": true, "isSigner": true },
+        { "name": "fromUser", "isMut": true, "isSigner": true },
+        { "name": "toUser", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "interactionType", "type": "u8" },
+        { "name": "weight", "type": "u16" },
+        { "name": "metadata", "type": "string" }
+      ]
+    },
+    {
+      "name": "castReputationVote",
+      "accounts": [
+        {
+          "name": "voterProfile",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 101, 112, 117, 116, 97, 116, 105, 111, 110]
+              },
+              { "kind": "account", "type": "publicKey", "path": "voter" }
+            ]
+          }
+        },
+        { "name": "realm", "isMut": true, "isSigner": false },
+        { "name": "voter", "isMut": true, "isSigner": true }
+      ],
+      "args": [
+        { "name": "voteType", "type": "u8" },
+        { "name": "justification", "type": "string" }
+      ]
+    },
+    {
+      "name": "createRealm",
+      "accounts": [
+        {
+          "name": "realm",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [114, 101, 97, 108, 109] },
+              { "kind": "arg", "type": "bytes", "path": "realmName" }
+            ]
+          }
+        },
+        { "name": "admin", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "realmName", "type": "string" },
+        { "name": "algorithmWeights", "type": { "array": ["u16", 5] } }
+      ]
+    },
+    {
+      "name": "delegateReputation",
+      "accounts": [
+        { "name": "delegatorProfile", "isMut": true, "isSigner": false },
+        { "name": "delegateeProfile", "isMut": true, "isSigner": false },
+        { "name": "delegator", "isMut": true, "isSigner": true }
+      ],
+      "args": [
+        { "name": "delegateTo", "type": "publicKey" },
+        { "name": "weightPercentage", "type": "u8" }
+      ]
+    },
+    {
+      "name": "claimBadge",
+      "accounts": [
+        { "name": "profile", "isMut": true, "isSigner": false },
+        { "name": "badgeAccount", "isMut": true, "isSigner": true },
+        { "name": "user", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "badgeType", "type": "u8" },
+        { "name": "proofHash", "type": { "array": ["u8", 32] } }
+      ]
+    },
+    {
+      "name": "bridgeReputation",
+      "accounts": [
+        { "name": "profile", "isMut": true, "isSigner": false },
+        { "name": "realm", "isMut": false, "isSigner": false },
+        { "name": "user", "isMut": true, "isSigner": true }
+      ],
+      "args": [
+        { "name": "sourceRealm", "type": "publicKey" },
+        { "name": "bridgeWeight", "type": "u8" }
+      ]
+    },
+    {
+      "name": "updateAlgorithm",
+      "accounts": [
+        { "name": "realm", "isMut": true, "isSigner": false },
+        { "name": "admin", "isMut": true, "isSigner": true }
+      ],
+      "args": [
+        { "name": "algorithmWeights", "type": { "array": ["u16", 5] } },
+        { "name": "decayFactor", "type": "u8" },
+        { "name": "aiEnhancement", "type": "bool" },
+        { "name": "crossRealmFactor", "type": "u8" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ReputationProfile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "wallet", "type": "publicKey" },
+          { "name": "totalScore", "type": "u64" },
+          { "name": "categoryScores", "type": { "array": ["u64", 5] } },
+          { "name": "interactionCount", "type": "u32" },
+          {
+            "name": "badges",
+            "type": { "array": [{ "defined": "Badge" }, 10] }
+          },
+          { "name": "trustMultiplier", "type": "u64" },
+          { "name": "lastActivity", "type": "i64" },
+          { "name": "reputationDecayRate", "type": "u8" },
+          { "name": "delegatedPower", "type": "u64" },
+          { "name": "delegationReceived", "type": "u64" },
+          { "name": "realmMemberships", "type": { "array": ["publicKey", 5] } },
+          { "name": "aiValidationScore", "type": "u32" },
+          { "name": "crossDaoReputation", "type": "u64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "GovernanceRealm",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "realmId", "type": "publicKey" },
+          { "name": "name", "type": { "array": ["u8", 32] } },
+          { "name": "adminWallets", "type": { "array": ["publicKey", 3] } },
+          {
+            "name": "reputationAlgorithm",
+            "type": { "defined": "ReputationAlgorithm" }
+          },
+          { "name": "totalMembers", "type": "u32" },
+          { "name": "activeProposals", "type": "u16" },
+          { "name": "treasuryBalance", "type": "u64" },
+          { "name": "governanceToken", "type": { "option": "publicKey" } },
+          { "name": "minReputationThreshold", "type": "u64" },
+          { "name": "votingPeriodSeconds", "type": "u32" },
+          { "name": "crossRealmEnabled", "type": "bool" },
+          { "name": "aiModerationEnabled", "type": "bool" },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "InteractionEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "from", "type": "publicKey" },
+          { "name": "to", "type": "publicKey" },
+          { "name": "interactionType", "type": "u8" },
+          { "name": "weight", "type": "u16" },
+          { "name": "metadataHash", "type": { "array": ["u8", 32] } },
+          { "name": "reputationDelta", "type": "u64" },
+          { "name": "timestamp", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "BadgeReceipt",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "owner", "type": "publicKey" },
+          { "name": "badgeType", "type": "u8" },
+          { "name": "proofHash", "type": { "array": ["u8", 32] } },
+          { "name": "earnedAt", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Badge",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "badgeType", "type": { "defined": "BadgeType" } },
+          { "name": "earnedAt", "type": "i64" },
+          { "name": "issuerRealm", "type": "publicKey" },
+          { "name": "metadataHash", "type": { "array": ["u8", 32] } }
+        ]
+      }
+    },
+    {
+      "name": "BadgeType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "None" },
+          { "name": "Developer" },
+          { "name": "GovernanceParticipant" },
+          { "name": "CommunityBuilder" },
+          { "name": "SecurityAuditor" },
+          { "name": "Innovation" },
+          { "name": "Mentor" },
+          { "name": "EarlyAdopter" },
+          { "name": "CrossChainBridge" },
+          { "name": "AIValidator" },
+          { "name": "Custom" }
+        ]
+      }
+    },
+    {
+      "name": "ReputationAlgorithm",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "developmentWeight", "type": "u16" },
+          { "name": "governanceWeight", "type": "u16" },
+          { "name": "communityWeight", "type": "u16" },
+          { "name": "innovationWeight", "type": "u16" },
+          { "name": "securityWeight", "type": "u16" },
+          { "name": "decayFactor", "type": "u8" },
+          { "name": "aiEnhancement", "type": "bool" },
+          { "name": "crossRealmFactor", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "InteractionRecorded",
+      "fields": [
+        { "name": "from", "type": "publicKey", "index": false },
+        { "name": "to", "type": "publicKey", "index": false },
+        { "name": "interactionType", "type": "u8", "index": false },
+        { "name": "reputationDelta", "type": "u64", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidInteractionType",
+      "msg": "Invalid interaction type"
+    },
+    { "code": 6001, "name": "WeightTooHigh", "msg": "Weight value too high" },
+    {
+      "code": 6002,
+      "name": "MetadataTooLong",
+      "msg": "Metadata string too long"
+    },
+    {
+      "code": 6003,
+      "name": "CooldownActive",
+      "msg": "Cooldown period still active"
+    },
+    {
+      "code": 6004,
+      "name": "SelfInteractionForbidden",
+      "msg": "Cannot interact with yourself"
+    },
+    {
+      "code": 6005,
+      "name": "DailyLimitExceeded",
+      "msg": "Daily interaction limit exceeded"
+    },
+    {
+      "code": 6006,
+      "name": "InsufficientReputation",
+      "msg": "Insufficient reputation for this action"
+    },
+    {
+      "code": 6007,
+      "name": "SuspiciousActivity",
+      "msg": "Suspicious activity detected"
+    },
+    { "code": 6008, "name": "BotDetected", "msg": "Bot behavior detected" },
+    {
+      "code": 6009,
+      "name": "NotRealmMember",
+      "msg": "Not a member of this realm"
+    },
+    {
+      "code": 6010,
+      "name": "AdminRequired",
+      "msg": "Admin privileges required"
+    },
+    { "code": 6011, "name": "InvalidActionType", "msg": "Invalid action type" },
+    { "code": 6012, "name": "RealmNameTooLong", "msg": "Realm name too long" },
+    {
+      "code": 6013,
+      "name": "InvalidAlgorithmWeights",
+      "msg": "Invalid algorithm weights"
+    },
+    {
+      "code": 6014,
+      "name": "BadgeAlreadyClaimed",
+      "msg": "Badge already claimed"
+    },
+    { "code": 6015, "name": "InvalidBadgeProof", "msg": "Invalid badge proof" },
+    {
+      "code": 6016,
+      "name": "DelegationTooHigh",
+      "msg": "Delegation percentage too high"
+    },
+    {
+      "code": 6017,
+      "name": "SelfDelegationForbidden",
+      "msg": "Cannot delegate to yourself"
+    },
+    {
+      "code": 6018,
+      "name": "BridgeOperationFailed",
+      "msg": "Bridge operation failed"
+    },
+    {
+      "code": 6019,
+      "name": "SourceRealmNotFound",
+      "msg": "Source realm not found"
+    },
+    {
+      "code": 6020,
+      "name": "CrossRealmDisabled",
+      "msg": "Cross-realm operations disabled"
+    },
+    { "code": 6021, "name": "MathOverflow", "msg": "Mathematical overflow" },
+    { "code": 6022, "name": "InvalidTimestamp", "msg": "Invalid timestamp" },
+    {
+      "code": 6023,
+      "name": "ProfileNotInitialized",
+      "msg": "Profile not initialized"
+    },
+    {
+      "code": 6024,
+      "name": "RealmCreationFailed",
+      "msg": "Realm creation failed"
+    }
+  ],
+  "metadata": { "address": "So1anaRepU6tWxzAoNn31M3b9nS6g2oT5VtN7k4XQ4vH" }
+}

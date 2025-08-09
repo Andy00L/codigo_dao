@@ -1,0 +1,15 @@
+[workspace]
+members = ["programs/solana-reputation-dao"]
+
+[programs.localnet]
+solana_reputation_dao = "So1anaRepU6tWxzAoNn31M3b9nS6g2oT5VtN7k4XQ4vH"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "pnpm ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

@@ -1,0 +1,13 @@
+[package]
+name = "solana-reputation-dao"
+version = "0.1.0"
+description = "Advanced Reputation DAO on Solana"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "solana_reputation_dao"
+
+[dependencies]
+anchor-lang = "0.29.0"
+solana-program = "1.18.10"
