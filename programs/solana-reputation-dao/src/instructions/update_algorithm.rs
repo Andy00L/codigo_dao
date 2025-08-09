@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::governance_realm::GovernanceRealm;
+use crate::state::GovernanceRealm;
 use crate::errors::ReputationError;
 
 #[derive(Accounts)]
@@ -17,7 +17,6 @@ pub fn handler(
     ai_enhancement: bool,
     cross_realm_factor: u8,
 ) -> Result<()> {
-    // admin check
     require!(
         ctx.accounts.realm.admin_wallets.contains(&ctx.accounts.admin.key()),
         ReputationError::AdminRequired

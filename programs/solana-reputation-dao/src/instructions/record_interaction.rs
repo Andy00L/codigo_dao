@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::{reputation_profile::ReputationProfile, interaction_event::InteractionEvent};
+use crate::state::{ReputationProfile, InteractionEvent};
 use crate::utils::{reputation_math, security};
 use crate::errors::ReputationError;
 
@@ -29,7 +29,7 @@ pub struct RecordInteraction<'info> {
     #[account(mut)]
     pub from_user: Signer<'info>,
 
-    /// CHECK: validated via seeds for to_profile
+    /// CHECK: validated by to_profile seeds vs to_user
     pub to_user: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
@@ -61,7 +61,6 @@ pub fn handler(
         cooldown_period,
     )?;
 
-    // Calculate reputation delta
     let mut reputation_delta = reputation_math::calculate_interaction_impact(
         &ctx.accounts.from_profile,
         &ctx.accounts.to_profile,
@@ -69,7 +68,6 @@ pub fn handler(
         weight,
     )?;
 
-    // AI multiplier bonus
     let ai_score = ctx.accounts.from_profile.ai_validation_score;
     let ai_multiplier: u64 = if ai_score > 800 {
         110
@@ -78,39 +76,33 @@ pub fn handler(
     } else {
         100
     };
-
     reputation_delta = (reputation_delta * ai_multiplier) / 100;
 
-    // Apply trust multiplier (fixed-point where 100 == 1.00x)
     let trust_mult = ctx.accounts.from_profile.trust_multiplier.max(1);
     reputation_delta = (reputation_delta * trust_mult) / 100;
 
-    // Update receiver profile primarily
     let to_profile = &mut ctx.accounts.to_profile;
     to_profile.total_score = to_profile.total_score.saturating_add(reputation_delta);
     to_profile.interaction_count = to_profile.interaction_count.saturating_add(1);
     to_profile.last_activity = clock.unix_timestamp;
 
-    // Update category score based on interaction type
     let cat_index = match interaction_type {
-        3 | 4 => 0, // Development
-        2 | 5 | 8 => 2, // Community/Mentorship
-        1 => 2, // comment -> Community
-        6 => 4, // Security finding
-        7 => 3, // Innovation
-        9 => 1, // treat as governance/cross-chain
-        _ => 2, // default Community
+        3 | 4 => 0,           // Development
+        2 | 5 | 8 => 2,       // Community/Mentorship
+        1 => 2,               // Comment -> Community
+        6 => 4,               // Security
+        7 => 3,               // Innovation
+        9 => 1,               // Governance-ish
+        _ => 2,
     };
     if (cat_index as usize) < to_profile.category_scores.len() {
         to_profile.category_scores[cat_index as usize] =
             to_profile.category_scores[cat_index as usize].saturating_add(reputation_delta);
     }
 
-    // Update sender activity
     let from_profile = &mut ctx.accounts.from_profile;
     from_profile.last_activity = clock.unix_timestamp;
 
-    // Fill interaction event
     let meta_hash = reputation_math::hash_metadata(&metadata);
     let event = &mut ctx.accounts.interaction_event;
     event.from = ctx.accounts.from_user.key();

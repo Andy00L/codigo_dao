@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
-use crate::state::governance_realm::{GovernanceRealm, ReputationAlgorithm};
+use crate::state::{GovernanceRealm, ReputationAlgorithm};
 use crate::errors::ReputationError;
 
 #[derive(Accounts)]
-#[instruction(realm_name: String, algorithm_weights: [u16; 5])]
+#[instruction(realm_name: String, _algorithm_weights: [u16; 5])]
 pub struct CreateRealm<'info> {
     #[account(
         init,
@@ -25,14 +25,12 @@ pub fn handler(
 ) -> Result<()> {
     require!(realm_name.len() <= 32, ReputationError::RealmNameTooLong);
 
-    // Basic validation
     let total_weight: u64 = algorithm_weights.iter().map(|&x| x as u64).sum();
     require!(total_weight > 0, ReputationError::InvalidAlgorithmWeights);
 
     let clock = Clock::get()?;
     let realm = &mut ctx.accounts.realm;
 
-    // Fill fields
     realm.realm_id = ctx.accounts.realm.key();
     let mut name_buf = [0u8; 32];
     let name_bytes = realm_name.as_bytes();
@@ -45,7 +43,7 @@ pub fn handler(
         community_weight: algorithm_weights[2],
         innovation_weight: algorithm_weights[3],
         security_weight: algorithm_weights[4],
-        decay_factor: 2, // default
+        decay_factor: 2,
         ai_enhancement: true,
         cross_realm_factor: 10,
     };
@@ -58,7 +56,7 @@ pub fn handler(
     realm.cross_realm_enabled = true;
     realm.ai_moderation_enabled = false;
     realm.created_at = clock.unix_timestamp;
-    realm.bump = *ctx.bumps.get("realm").unwrap();
+    realm.bump = ctx.bumps.realm;
 
     Ok(())
 }

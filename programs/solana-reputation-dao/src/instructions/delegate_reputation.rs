@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::reputation_profile::ReputationProfile;
+use crate::state::ReputationProfile;
 use crate::errors::ReputationError;
 
 #[derive(Accounts)]
@@ -25,13 +25,12 @@ pub fn handler(
 
     let power = (delegator_profile.total_score as u128 * weight_percentage as u128 / 100) as u64;
 
-    // For simplicity, overwrite delegator's delegated_power and add to delegatee's received
     let prev = delegator_profile.delegated_power;
     delegator_profile.delegated_power = power;
 
     let delegatee_profile = &mut ctx.accounts.delegatee_profile;
-    // Adjust received: subtract previous if previously delegated to same delegatee is not tracked; here we just add
-    delegatee_profile.delegation_received = delegatee_profile.delegation_received.saturating_add(power.saturating_sub(prev));
+    delegatee_profile.delegation_received =
+        delegatee_profile.delegation_received.saturating_add(power.saturating_sub(prev));
 
     Ok(())
 }
