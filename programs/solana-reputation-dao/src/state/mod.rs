@@ -1,8 +1,9 @@
-pub mod bridge_reputation;
-pub mod cast_reputation_vote;
-pub mod claim_badge;
-pub mod create_realm;
-pub mod delegate_reputation;
-pub mod initialize_profile;
-pub mod record_interaction;
-pub mod update_algorithm;
+pub mod badge_system;
+pub mod governance_realm;
+pub mod interaction_event;
+pub mod reputation_profile;
+
+pub use badge_system::*;
+pub use governance_realm::*;
+pub use interaction_event::*;
+pub use reputation_profile::*;
